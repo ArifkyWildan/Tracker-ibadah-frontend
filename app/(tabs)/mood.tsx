@@ -20,12 +20,11 @@ interface Activity {
   name: string;
   date: string;
   category: string;
-  deskirpsi: string;
   completed?: boolean;
 }
 
 export default function Index() {
-  const [form, setForm] = useState({ name: "", date: "", category: "", deskirpsi: "" });
+  const [form, setForm] = useState({ name: "", date: "", category: "" });
   const [showPicker, setShowPicker] = useState(false);
   const [aktivitas, setAktivitas] = useState<Activity[]>([]);
   const [filtercategory, setFilterCategory] = useState("");
@@ -34,28 +33,22 @@ export default function Index() {
     name: "",
     date: "",
     category: "",
-    deskirpsi: "",
   });
   const [showAlert, setShowAlert] = useState(false);
   const [alertType, setAlertType] = useState<"delete" | "update" | null>(null);
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const [showValidationAlert, setShowValidationAlert] = useState(false);
 
-  const isFormValid = () => 
-  form.name.length >= 3 &&
-  form.date.length >= 3 &&
-  form.category.length >= 3 &&
-  (form.deskirpsi.length === 0 || form.deskirpsi.length >= 3);
+  const isFormValid = () =>
+    form.name.length >= 3 && form.date.length >= 3 && form.category.length >= 3;
 
-const isUpdateFormValid = () => 
-  updateData.name.length >= 3 &&
-  updateData.date.length >= 3 &&
-  updateData.category.length >= 3 &&
-  (updateData.deskirpsi.length === 0 || updateData.deskirpsi.length >= 3);
+  const isUpdateFormValid = () =>
+    updateData.name.length >= 3 &&
+    updateData.date.length >= 3 &&
+    updateData.category.length >= 3;
 
   const getAktivitas = async () => {
     try {
-      const res = await axios.get("http://127.0.0.1:8000/api/lifehub");
+      const res = await axios.get("http://127.0.0.1:8000/api/mood");
       const dataWithCompleted = res.data.map((item: Activity) => ({
         ...item,
         completed: false,
@@ -68,13 +61,15 @@ const isUpdateFormValid = () =>
 
   const handleSubmit = async () => {
     if (!isFormValid()) {
-      setShowValidationAlert(true);
-      return;
+      return Alert.alert(
+        "Input Tidak Lengkap",
+        "Semua kolom harus diisi dan memiliki minimal 3 karakter."
+      );
     }
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/lifehub", form);
+      const res = await axios.post("http://127.0.0.1:8000/api/mood", form);
       setAktivitas((prev) => [...prev, { ...res.data, completed: false }]);
-      setForm({ name: "", date: "", category: "", deskirpsi: "" });
+      setForm({ name: "", date: "", category: "" });
       Alert.alert("Sukses", "Aktivitas berhasil ditambahkan!");
     } catch (err) {
       Alert.alert("Error", "Gagal mengirim data aktivitas. Silakan coba lagi.");
@@ -88,10 +83,6 @@ const isUpdateFormValid = () =>
   };
 
   const confirmUpdate = (id: number) => {
-    if (!isUpdateFormValid()) {
-      setShowValidationAlert(true);
-      return;
-    }
     setAlertType("update");
     setSelectedId(id);
     setShowAlert(true);
@@ -99,7 +90,7 @@ const isUpdateFormValid = () =>
 
   const handleDelete = async (id: number) => {
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/lifehub/${id}`);
+      await axios.delete(`http://127.0.0.1:8000/api/mood/${id}`);
       setAktivitas((prev) => prev.filter((a) => a.id !== id));
       Alert.alert("Terhapus", "Aktivitas berhasil dihapus.");
     } catch {
@@ -108,15 +99,19 @@ const isUpdateFormValid = () =>
   };
 
   const handleUpdate = async (id: number) => {
+    if (!isUpdateFormValid()) {
+      return Alert.alert(
+        "Input Tidak Lengkap",
+        "Semua kolom harus diisi dan memiliki minimal 3 karakter."
+      );
+    }
     try {
-      await axios.put(`http://127.0.0.1:8000/api/lifehub/${id}`, updateData);
+      await axios.put(`http://127.0.0.1:8000/api/mood/${id}`, updateData);
       setAktivitas((prev) =>
-        prev.map((a) =>
-          a.id === id ? { ...a, ...updateData } : a
-        )
+        prev.map((a) => (a.id === id ? { ...a, ...updateData } : a))
       );
       setUpdateId(null);
-      setUpdateData({ name: "", date: "", category: "", deskirpsi: "" });
+      setUpdateData({ name: "", date: "", category: "" });
       Alert.alert("Diperbarui", "Aktivitas berhasil diperbarui!");
     } catch {
       Alert.alert("Error", "Gagal memperbarui aktivitas. Silakan coba lagi.");
@@ -125,9 +120,7 @@ const isUpdateFormValid = () =>
 
   const toggleChecked = (id: number) => {
     setAktivitas((prev) =>
-      prev.map((a) =>
-        a.id === id ? { ...a, completed: !a.completed } : a
-      )
+      prev.map((a) => (a.id === id ? { ...a, completed: !a.completed } : a))
     );
   };
 
@@ -135,16 +128,38 @@ const isUpdateFormValid = () =>
     getAktivitas();
   }, []);
 
-  const categories = ["Pribadi", "Kerja", "Belajar"];
+  const categories = ["Senang", "Sedih", "Stress"];
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: Platform.OS === "web" ? "#FEF1E1" : "#f8f9fa" }}>
-      <View style={[tw`py-6 px-4 shadow-lg rounded-b-3xl items-center`, { backgroundColor: '#fff' }]}>
-        <Text style={{ fontSize: 28, fontWeight: 'bold', color: '#FC350C' }}>Lifehub</Text>
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: Platform.OS === "web" ? "#FEF1E1" : "#f8f9fa",
+      }}
+    >
+      <View
+        style={[
+          tw`py-6 px-4 shadow-lg rounded-b-3xl items-center`,
+          { backgroundColor: "#fff" },
+        ]}
+      >
+        <Text style={{ fontSize: 28, fontWeight: "bold", color: "#FC350C" }}>
+          MoodTracker
+        </Text>
       </View>
 
       <ScrollView style={tw`p-2 mt-3`} contentContainerStyle={tw`pb-20`}>
-        <View style={[tw`p-6 rounded-3xl shadow-lg mb-8`, { backgroundColor: "#ffffff", borderWidth: 1, borderColor: "#e1e4e8" }]}>
+        {/* Form Input */}
+        <View
+          style={[
+            tw`p-6 rounded-3xl shadow-lg mb-8`,
+            {
+              backgroundColor: "#ffffff",
+              borderWidth: 1,
+              borderColor: "#e1e4e8",
+            },
+          ]}
+        >
           <TextInput
             style={tw`border border-gray-200 p-4 rounded-2xl mb-4 text-base bg-gray-100`}
             placeholder="Nama Aktivitas"
@@ -230,29 +245,29 @@ const isUpdateFormValid = () =>
             ))}
           </select>
 
-          <TextInput
-            style={tw`border border-gray-200 p-4 rounded-2xl mb-4 text-base bg-gray-100`}
-            placeholder="Deskripsi"
-            placeholderTextColor="#6c757d"
-            value={updateId ? updateData.deskirpsi : form.deskirpsi}
-            onChangeText={(text) =>
-              updateId
-                ? setUpdateData({ ...updateData, deskirpsi: text })
-                : setForm({ ...form, deskirpsi: text })
-            }
-          />
-
           <TouchableOpacity
             onPress={() =>
               updateId ? confirmUpdate(updateId) : handleSubmit()
             }
+            disabled={updateId ? !isUpdateFormValid() : !isFormValid()}
             style={{
               padding: 16,
               borderRadius: 16,
               flexDirection: "row",
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: "#FC350B",
+              backgroundColor: updateId
+                ? isUpdateFormValid()
+                  ? "#FC350B"
+                  : "#e9ecef"
+                : isFormValid()
+                ? "#FC350B"
+                : "#e9ecef",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 4,
+              elevation: 3,
             }}
           >
             <Ionicons
@@ -324,7 +339,9 @@ const isUpdateFormValid = () =>
               <View style={tw`flex-row justify-between items-center`}>
                 <TouchableOpacity onPress={() => toggleChecked(item.id)}>
                   <Ionicons
-                    name={item.completed ? "checkbox-outline" : "square-outline"}
+                    name={
+                      item.completed ? "checkbox-outline" : "square-outline"
+                    }
                     size={28}
                     color="#FC350B"
                   />
@@ -335,16 +352,15 @@ const isUpdateFormValid = () =>
                       fontSize: 16,
                       fontWeight: "600",
                       color: item.completed ? "#a0aec0" : "#2d3748",
-                      textDecorationLine: item.completed ? "line-through" : "none",
+                      textDecorationLine: item.completed
+                        ? "line-through"
+                        : "none",
                     }}
                   >
                     {item.name}
                   </Text>
                   <Text style={tw`text-sm text-gray-500`}>
                     {item.date} - {item.category}
-                  </Text>
-                  <Text style={tw`text-sm text-gray-500`}>
-                    {item.deskirpsi}
                   </Text>
                 </View>
                 {!item.completed && (
@@ -362,7 +378,6 @@ const isUpdateFormValid = () =>
                           name: item.name,
                           date: item.date,
                           category: item.category,
-                          deskirpsi: item.deskirpsi,
                         });
                       }}
                       style={tw`bg-yellow-500 p-2 rounded-xl`}
@@ -376,11 +391,13 @@ const isUpdateFormValid = () =>
           ))}
       </ScrollView>
 
-      {/* Alert Konfirmasi Hapus / Update */}
+      {/* Alert */}
       <AwesomeAlert
         show={showAlert}
         showProgress={false}
-        title={alertType === "delete" ? "Konfirmasi Hapus" : "Konfirmasi Perbarui"}
+        title={
+          alertType === "delete" ? "Konfirmasi Hapus" : "Konfirmasi Perbarui"
+        }
         message={
           alertType === "delete"
             ? "Apakah Anda yakin ingin menghapus aktivitas ini?"
@@ -402,20 +419,6 @@ const isUpdateFormValid = () =>
           }
           setShowAlert(false);
         }}
-      />
-
-      {/* Alert Validasi Form */}
-      <AwesomeAlert
-        show={showValidationAlert}
-        showProgress={false}
-        title="Validasi Gagal"
-        message="Semua kolom harus diisi minimal 3 karakter."
-        closeOnTouchOutside={true}
-        closeOnHardwareBackPress={false}
-        showConfirmButton={true}
-        confirmText="OK"
-        confirmButtonColor="#FC350B"
-        onConfirmPressed={() => setShowValidationAlert(false)}
       />
     </SafeAreaView>
   );
